@@ -85,8 +85,8 @@ def parse_collection_dates(html: str, year: int = None) -> List[CollectionEvent]
 
     # Find all collection entries
     for p in soup.find_all("p", class_="mb-0 lead"):
-        # Find the icon span to determine collection type
-        icon = p.find("span", class_=re.compile(r"acpl-icon"))
+        # Find the icon element (i tag with acpl-icon class)
+        icon = p.find("i", class_="acpl-icon")
         date_elem = p.find("b")
 
         if not icon or not date_elem:

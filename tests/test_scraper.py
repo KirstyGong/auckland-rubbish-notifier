@@ -50,16 +50,22 @@ class TestParseCollectionDates:
     <body>
         <div class="acpl-schedule-card">
             <p class="mb-0 lead">
-                <span class="acpl-icon-with-attribute left rubbish"></span>
-                <b>Monday, 14 April</b>
+                <span class="acpl-icon-with-attribute left">
+                    <i class="acpl-icon rubbish"></i>
+                    <span>Rubbish: <b>Monday, 14 April</b></span>
+                </span>
             </p>
             <p class="mb-0 lead">
-                <span class="acpl-icon-with-attribute left recycle"></span>
-                <b>Monday, 21 April</b>
+                <span class="acpl-icon-with-attribute left">
+                    <i class="acpl-icon recycle"></i>
+                    <span>Recycling: <b>Monday, 21 April</b></span>
+                </span>
             </p>
             <p class="mb-0 lead">
-                <span class="acpl-icon-with-attribute left food-waste"></span>
-                <b>Monday, 14 April</b>
+                <span class="acpl-icon-with-attribute left">
+                    <i class="acpl-icon food-waste"></i>
+                    <span>Food scraps: <b>Monday, 14 April</b></span>
+                </span>
             </p>
         </div>
     </body>

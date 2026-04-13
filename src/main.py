@@ -35,11 +35,11 @@ def is_notification_hour() -> tuple[bool, int, int]:
 
 
 def format_collection_types(events: list[CollectionEvent]) -> str:
-    """Format collection types into readable string."""
+    """Format collection types into readable string with emojis."""
     type_names = {
-        "rubbish": "Rubbish",
-        "recycle": "Recycling",
-        "food-waste": "Food Scraps",
+        "rubbish": "🔴 Rubbish",
+        "recycle": "♻️ Recycling",
+        "food-waste": "🥗 Food Scraps",
     }
     types = [type_names.get(e.collection_type, e.collection_type) for e in events]
     return ", ".join(types)
