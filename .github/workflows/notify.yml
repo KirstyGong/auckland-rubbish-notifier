@@ -2,11 +2,10 @@ name: Rubbish Collection Notifier
 
 on:
   schedule:
-    # Run daily at 5pm NZT
-    # NZT is UTC+12 (winter) or UTC+13 (summer/daylight saving)
-    # 5pm NZST = 5am UTC, 5pm NZDT = 4am UTC
-    # Using 4am UTC to cover daylight saving
-    - cron: '0 4 * * *'
+    # Run hourly from 2am-8am UTC (covers 3pm-9pm NZT range)
+    # Actual notification only sent at NOTIFY_HOUR (default: 17 = 5pm NZT)
+    # This allows configurable notification time via GitHub variable
+    - cron: '0 2,3,4,5,6,7,8 * * *'
   workflow_dispatch:
     inputs:
       test_mode:
@@ -37,5 +36,6 @@ jobs:
         env:
           AUCKLAND_STREET: ${{ secrets.AUCKLAND_STREET }}
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          NOTIFY_HOUR: ${{ vars.NOTIFY_HOUR || '17' }}
           TEST_MODE: ${{ inputs.test_mode }}
         run: python -m src.main

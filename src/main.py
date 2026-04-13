@@ -2,7 +2,8 @@
 import os
 import sys
 import logging
-from datetime import date
+from datetime import date, datetime
+from zoneinfo import ZoneInfo
 
 from src.scraper import get_collections_for_street, CollectionEvent
 from src.notifier import send_notification
@@ -18,6 +19,19 @@ def get_todays_collections(events: list[CollectionEvent]) -> list[CollectionEven
     """Filter events to only those occurring today."""
     today = date.today()
     return [e for e in events if e.collection_date == today]
+
+
+def is_notification_hour() -> tuple[bool, int, int]:
+    """
+    Check if current NZT hour matches configured notification hour.
+
+    Returns:
+        Tuple of (is_correct_hour, current_hour, configured_hour)
+    """
+    notify_hour = int(os.environ.get("NOTIFY_HOUR", "17"))
+    nzt = ZoneInfo("Pacific/Auckland")
+    current_hour = datetime.now(nzt).hour
+    return current_hour == notify_hour, current_hour, notify_hour
 
 
 def format_collection_types(events: list[CollectionEvent]) -> str:
@@ -53,6 +67,13 @@ def main() -> int:
     if not topic:
         logger.error("NTFY_TOPIC environment variable not set")
         return 1
+
+    # Check if it's the right hour to notify (skip in test mode)
+    if not test_mode:
+        is_right_hour, current_hour, configured_hour = is_notification_hour()
+        if not is_right_hour:
+            logger.info(f"Skipping - current hour {current_hour} NZT, configured hour {configured_hour} NZT")
+            return 0
 
     try:
         # Fetch collection dates

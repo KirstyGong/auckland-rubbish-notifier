@@ -30,7 +30,15 @@ Go to Settings > Secrets and variables > Actions > New repository secret:
 | `AUCKLAND_STREET` | Your street + suburb (no house number) | `Queen Street, Ponsonby` |
 | `NTFY_TOPIC` | Your ntfy.sh topic name | `my-rubbish-x7k9m` |
 
-### 4. Test
+### 4. (Optional) Configure notification time
+
+Go to Settings > Secrets and variables > Actions > Variables:
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `NOTIFY_HOUR` | Hour to send notification (0-23 in NZT) | `17` (5pm) |
+
+### 5. Test
 
 Go to Actions > "Rubbish Collection Notifier" > Run workflow.
 
