@@ -21,7 +21,7 @@ def send_notification(title: str, message: str, topic: str) -> None:
     headers = {
         "Title": title,
         "Tags": "wastebasket",
-        "Priority": "default",
+        "Priority": "high",
     }
 
     response = requests.post(
