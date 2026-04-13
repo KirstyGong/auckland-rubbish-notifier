@@ -7,7 +7,12 @@ on:
     # 5pm NZST = 5am UTC, 5pm NZDT = 4am UTC
     # Using 4am UTC to cover daylight saving
     - cron: '0 4 * * *'
-  workflow_dispatch:  # Allow manual trigger
+  workflow_dispatch:
+    inputs:
+      test_mode:
+        description: 'Send test notification (ignores actual bin day)'
+        type: boolean
+        default: false
 
 jobs:
   notify:
@@ -32,4 +37,5 @@ jobs:
         env:
           AUCKLAND_STREET: ${{ secrets.AUCKLAND_STREET }}
           NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
+          TEST_MODE: ${{ inputs.test_mode }}
         run: python -m src.main

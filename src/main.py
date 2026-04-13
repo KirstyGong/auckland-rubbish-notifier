@@ -44,6 +44,7 @@ def main() -> int:
     # Load configuration from environment
     street = os.environ.get("AUCKLAND_STREET")
     topic = os.environ.get("NTFY_TOPIC")
+    test_mode = os.environ.get("TEST_MODE", "").lower() == "true"
 
     if not street:
         logger.error("AUCKLAND_STREET environment variable not set")
@@ -61,6 +62,16 @@ def main() -> int:
 
         # Check if any collections are today
         todays_events = get_todays_collections(events)
+
+        if test_mode:
+            logger.info("TEST MODE: Sending test notification")
+            send_notification(
+                title="Test: Bin Day Notification",
+                message="This is a test notification. Your setup is working!",
+                topic=topic
+            )
+            logger.info("Test notification sent successfully")
+            return 0
 
         if not todays_events:
             logger.info("No collections today")
