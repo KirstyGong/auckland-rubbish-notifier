@@ -4,9 +4,9 @@ Automated push notifications for Auckland Council rubbish/recycling collection d
 
 ## How It Works
 
-1. GitHub Actions runs daily at 5pm NZT
+1. GitHub Actions runs daily at your configured hour (default: 5pm NZT)
 2. Scrapes Auckland Council website for your collection dates
-3. If today is a collection day, sends push notification via ntfy.sh
+3. If tomorrow is a collection day, sends "Bin Day Tomorrow" notification via ntfy.sh
 
 ## Setup
 
@@ -21,24 +21,31 @@ Subscribe to a secret topic name (e.g., `my-rubbish-x7k9m`).
 
 Fork to your own GitHub account.
 
-### 3. Add secrets
+### 3. Add secret
 
 Go to Settings > Secrets and variables > Actions > New repository secret:
 
-| Secret | Description | Example |
-|--------|-------------|---------|
-| `AUCKLAND_STREET` | Your street + suburb (no house number) | `Queen Street, Ponsonby` |
-| `NTFY_TOPIC` | Your ntfy.sh topic name | `my-rubbish-x7k9m` |
+| Secret | Description |
+|--------|-------------|
+| `USERS_CONFIG` | JSON array of users (see below) |
 
-### 4. (Optional) Configure notification time
+**USERS_CONFIG format:**
 
-Go to Settings > Secrets and variables > Actions > Variables:
+```json
+[
+  {"name": "me", "street": "Queen Street, Ponsonby", "topic": "my-bins-xyz"},
+  {"name": "friend", "street": "Victoria Road, Devonport", "topic": "friend-bins-abc", "notify_hour": 18}
+]
+```
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `NOTIFY_HOUR` | Hour to send notification (0-23 in NZT) | `17` (5pm) |
+| Field | Required | Description |
+|-------|----------|-------------|
+| `name` | Yes | Identifier for logging |
+| `street` | Yes | Street + suburb (no house number) |
+| `topic` | Yes | ntfy.sh topic name |
+| `notify_hour` | No | Hour to notify in NZT (default: 17 / 5pm) |
 
-### 5. Test
+### 4. Test
 
 Go to Actions > "Rubbish Collection Notifier" > Run workflow.
 
@@ -53,9 +60,8 @@ pip install -r requirements.txt
 # Run tests
 pytest tests/ -v
 
-# Test locally (set env vars first)
-export AUCKLAND_STREET="Queen Street, Auckland"
-export NTFY_TOPIC="test-topic"
+# Test locally
+export USERS_CONFIG='[{"name": "test", "street": "Queen Street, Auckland", "topic": "test-topic"}]'
 python -m src.main
 ```
 

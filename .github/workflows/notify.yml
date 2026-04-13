@@ -34,8 +34,6 @@ jobs:
 
       - name: Check and notify
         env:
-          AUCKLAND_STREET: ${{ secrets.AUCKLAND_STREET }}
-          NTFY_TOPIC: ${{ secrets.NTFY_TOPIC }}
-          NOTIFY_HOUR: ${{ vars.NOTIFY_HOUR || '17' }}
+          USERS_CONFIG: ${{ secrets.USERS_CONFIG }}
           TEST_MODE: ${{ inputs.test_mode }}
         run: python -m src.main
