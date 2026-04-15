@@ -129,17 +129,23 @@ def process_user(user: UserConfig, test_mode: bool) -> tuple[str, bool, str]:
             )
             return (user.name, True, "Test notification sent")
 
-        # Check if it's the right hour
-        is_right_hour, current_hour, configured_hour = is_user_notification_hour(user)
-        if not is_right_hour:
-            return (user.name, True, f"Skipped - hour {current_hour}, configured {configured_hour}")
-
         # Fetch collections
         events = get_collections_for_street(user.street)
         tomorrows_events = get_tomorrows_collections(events)
 
+        # Find next bin day for logging
+        next_bin = ""
+        if events:
+            next_date = min(e.collection_date for e in events)
+            next_bin = f", next bin: {next_date.strftime('%a %d %b')}"
+
+        # Check if it's the right hour
+        is_right_hour, current_hour, configured_hour = is_user_notification_hour(user)
+        if not is_right_hour:
+            return (user.name, True, f"Skipped - hour {current_hour}, configured {configured_hour}{next_bin}")
+
         if not tomorrows_events:
-            return (user.name, True, "No collections tomorrow")
+            return (user.name, True, f"No collections tomorrow{next_bin}")
 
         # Send notification for tomorrow's collection
         collection_types = format_collection_types(tomorrows_events)
