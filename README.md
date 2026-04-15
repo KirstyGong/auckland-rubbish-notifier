@@ -37,14 +37,14 @@ name|street|topic|hour
 
 Example:
 ```
-me|Queen Street, Ponsonby|my-bins-xyz|17
-friend|Victoria Road, Devonport|friend-bins-abc|18
+me|123 Queen Street, Ponsonby|my-bins-xyz|17
+friend|45 Victoria Road, Devonport|friend-bins-abc|18
 ```
 
 | Field | Required | Description |
 |-------|----------|-------------|
 | name | Yes | Identifier for logging |
-| street | Yes | Street + suburb (no house number) |
+| address | Yes | Full address with house number (e.g., "9 Dickey Street, New Windsor") |
 | topic | Yes | ntfy.sh topic name |
 | hour | No | Hour to notify in NZT (default: 17 / 5pm) |
 
@@ -64,7 +64,7 @@ pip install -r requirements.txt
 pytest tests/ -v
 
 # Test locally
-export USERS_CONFIG='test|Queen Street, Auckland|test-topic'
+export USERS_CONFIG='test|123 Queen Street, Auckland|test-topic'
 python -m src.main
 ```
 

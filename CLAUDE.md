@@ -15,7 +15,7 @@ pytest tests/ -v
 pytest tests/test_scraper.py::TestParseCollectionDates::test_parses_rubbish_collection -v
 
 # Run locally
-export USERS_CONFIG='test|Queen Street, Auckland|test-topic'
+export USERS_CONFIG='test|123 Queen Street, Auckland|test-topic'
 python -m src.main
 ```
 
