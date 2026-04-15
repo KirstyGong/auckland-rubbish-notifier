@@ -77,8 +77,10 @@ def format_collection_types(events: list[CollectionEvent]) -> str:
         "recycle": "♻️ Recycling",
         "food-waste": "🥗 Food Scraps",
     }
-    types = [type_names.get(e.collection_type, e.collection_type) for e in events]
-    return ", ".join(types)
+    # Deduplicate by using dict to preserve order
+    unique_types = list(dict.fromkeys(e.collection_type for e in events))
+    formatted = [type_names.get(t, t) for t in unique_types]
+    return ", ".join(formatted)
 
 
 def is_user_notification_hour(user: UserConfig) -> tuple[bool, int, int]:
