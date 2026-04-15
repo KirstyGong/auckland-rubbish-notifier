@@ -10,13 +10,13 @@ from src.scraper import CollectionEvent
 class TestLoadUsersConfig:
     """Tests for loading user configuration from USERS_CONFIG env var."""
 
-    def test_parses_valid_json_with_single_user(self):
-        """Given valid JSON with one user, returns list with one UserConfig."""
-        from src.main import load_users_config, UserConfig
+    def test_parses_single_user(self):
+        """Given one user line, returns list with one UserConfig."""
+        from src.main import load_users_config
 
-        config_json = '[{"name": "test", "street": "Queen Street, Auckland", "topic": "test-topic"}]'
+        config = "test|Queen Street, Auckland|test-topic"
 
-        with patch.dict("os.environ", {"USERS_CONFIG": config_json}, clear=True):
+        with patch.dict("os.environ", {"USERS_CONFIG": config}, clear=True):
             users = load_users_config()
 
         assert len(users) == 1
@@ -25,16 +25,14 @@ class TestLoadUsersConfig:
         assert users[0].topic == "test-topic"
         assert users[0].notify_hour == 17  # default
 
-    def test_parses_valid_json_with_multiple_users(self):
-        """Given valid JSON with multiple users, returns all UserConfigs."""
-        from src.main import load_users_config, UserConfig
+    def test_parses_multiple_users(self):
+        """Given multiple user lines, returns all UserConfigs."""
+        from src.main import load_users_config
 
-        config_json = '''[
-            {"name": "user1", "street": "Street 1", "topic": "topic1"},
-            {"name": "user2", "street": "Street 2", "topic": "topic2", "notify_hour": 18}
-        ]'''
+        config = """user1|Street 1|topic1
+user2|Street 2|topic2|18"""
 
-        with patch.dict("os.environ", {"USERS_CONFIG": config_json}, clear=True):
+        with patch.dict("os.environ", {"USERS_CONFIG": config}, clear=True):
             users = load_users_config()
 
         assert len(users) == 2
@@ -43,31 +41,20 @@ class TestLoadUsersConfig:
         assert users[1].name == "user2"
         assert users[1].notify_hour == 18
 
-    def test_raises_error_for_invalid_json(self):
-        """Given invalid JSON, raises ValueError with helpful message."""
+    def test_raises_error_for_too_few_fields(self):
+        """Given line with fewer than 3 fields, raises ValueError."""
         from src.main import load_users_config
 
-        with patch.dict("os.environ", {"USERS_CONFIG": "not valid json"}, clear=True):
-            with pytest.raises(ValueError, match="not valid JSON"):
+        with patch.dict("os.environ", {"USERS_CONFIG": "name|street"}, clear=True):
+            with pytest.raises(ValueError, match="expected at least 3 fields"):
                 load_users_config()
 
-    def test_raises_error_when_not_array(self):
-        """Given JSON object instead of array, raises ValueError."""
+    def test_raises_error_for_invalid_hour(self):
+        """Given non-numeric hour, raises ValueError."""
         from src.main import load_users_config
 
-        with patch.dict("os.environ", {"USERS_CONFIG": '{"name": "test"}'}, clear=True):
-            with pytest.raises(ValueError, match="must be a JSON array"):
-                load_users_config()
-
-    def test_raises_error_for_missing_required_field(self):
-        """Given user missing required field, raises ValueError."""
-        from src.main import load_users_config
-
-        # Missing "topic" field
-        config_json = '[{"name": "test", "street": "Street 1"}]'
-
-        with patch.dict("os.environ", {"USERS_CONFIG": config_json}, clear=True):
-            with pytest.raises(ValueError, match="missing required field.*topic"):
+        with patch.dict("os.environ", {"USERS_CONFIG": "name|street|topic|abc"}, clear=True):
+            with pytest.raises(ValueError, match="notify_hour must be a number"):
                 load_users_config()
 
     def test_raises_error_when_env_var_not_set(self):
@@ -77,6 +64,19 @@ class TestLoadUsersConfig:
         with patch.dict("os.environ", {}, clear=True):
             with pytest.raises(ValueError, match="USERS_CONFIG.*not set"):
                 load_users_config()
+
+    def test_skips_empty_lines(self):
+        """Given empty lines in config, skips them."""
+        from src.main import load_users_config
+
+        config = """user1|Street 1|topic1
+
+user2|Street 2|topic2"""
+
+        with patch.dict("os.environ", {"USERS_CONFIG": config}, clear=True):
+            users = load_users_config()
+
+        assert len(users) == 2
 
 
 class TestProcessUser:

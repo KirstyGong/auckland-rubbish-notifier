@@ -29,21 +29,24 @@ Go to Settings > Secrets and variables > Actions > New repository secret:
 |--------|-------------|
 | `USERS_CONFIG` | JSON array of users (see below) |
 
-**USERS_CONFIG format:**
+**USERS_CONFIG format** (one user per line, pipe-separated):
 
-```json
-[
-  {"name": "me", "street": "Queen Street, Ponsonby", "topic": "my-bins-xyz"},
-  {"name": "friend", "street": "Victoria Road, Devonport", "topic": "friend-bins-abc", "notify_hour": 18}
-]
+```
+name|street|topic|hour
+```
+
+Example:
+```
+me|Queen Street, Ponsonby|my-bins-xyz|17
+friend|Victoria Road, Devonport|friend-bins-abc|18
 ```
 
 | Field | Required | Description |
 |-------|----------|-------------|
-| `name` | Yes | Identifier for logging |
-| `street` | Yes | Street + suburb (no house number) |
-| `topic` | Yes | ntfy.sh topic name |
-| `notify_hour` | No | Hour to notify in NZT (default: 17 / 5pm) |
+| name | Yes | Identifier for logging |
+| street | Yes | Street + suburb (no house number) |
+| topic | Yes | ntfy.sh topic name |
+| hour | No | Hour to notify in NZT (default: 17 / 5pm) |
 
 ### 4. Test
 
@@ -61,7 +64,7 @@ pip install -r requirements.txt
 pytest tests/ -v
 
 # Test locally
-export USERS_CONFIG='[{"name": "test", "street": "Queen Street, Auckland", "topic": "test-topic"}]'
+export USERS_CONFIG='test|Queen Street, Auckland|test-topic'
 python -m src.main
 ```
 

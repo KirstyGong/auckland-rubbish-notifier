@@ -1,5 +1,4 @@
 """Main orchestrator for Auckland rubbish collection notifier."""
-import json
 import os
 import sys
 import logging
@@ -24,36 +23,50 @@ def load_users_config() -> list[UserConfig]:
     """
     Load user configuration from USERS_CONFIG environment variable.
 
+    Format: one user per line, pipe-separated fields:
+        name|street|topic|hour (hour is optional, defaults to 17)
+
+    Example:
+        me|Queen Street, Ponsonby|my-bins-xyz|17
+        friend|Victoria Road, Devonport|friend-bins-abc|18
+
     Returns:
         List of UserConfig objects
 
     Raises:
-        ValueError: If USERS_CONFIG is not set, invalid JSON, or missing fields
+        ValueError: If USERS_CONFIG is not set or has invalid format
     """
-    users_json = os.environ.get("USERS_CONFIG")
+    config = os.environ.get("USERS_CONFIG")
 
-    if not users_json:
+    if not config:
         raise ValueError("USERS_CONFIG environment variable not set")
 
-    try:
-        data = json.loads(users_json)
-    except json.JSONDecodeError as e:
-        raise ValueError(f"USERS_CONFIG is not valid JSON: {e}")
-
-    if not isinstance(data, list):
-        raise ValueError("USERS_CONFIG must be a JSON array")
-
     users = []
-    for i, u in enumerate(data):
-        for field in ("name", "street", "topic"):
-            if field not in u:
-                raise ValueError(f"User {i} missing required field: {field}")
+    for i, line in enumerate(config.strip().split("\n")):
+        line = line.strip()
+        if not line:
+            continue
+
+        parts = line.split("|")
+        if len(parts) < 3:
+            raise ValueError(f"Line {i + 1}: expected at least 3 fields (name|street|topic), got {len(parts)}")
+
+        notify_hour = 17
+        if len(parts) >= 4 and parts[3].strip():
+            try:
+                notify_hour = int(parts[3].strip())
+            except ValueError:
+                raise ValueError(f"Line {i + 1}: notify_hour must be a number, got '{parts[3]}'")
+
         users.append(UserConfig(
-            name=u["name"],
-            street=u["street"],
-            topic=u["topic"],
-            notify_hour=u.get("notify_hour", 17)
+            name=parts[0].strip(),
+            street=parts[1].strip(),
+            topic=parts[2].strip(),
+            notify_hour=notify_hour
         ))
+
+    if not users:
+        raise ValueError("USERS_CONFIG contains no valid users")
 
     return users
 

@@ -15,7 +15,7 @@ pytest tests/ -v
 pytest tests/test_scraper.py::TestParseCollectionDates::test_parses_rubbish_collection -v
 
 # Run locally
-export USERS_CONFIG='[{"name": "test", "street": "Queen Street, Auckland", "topic": "test-topic"}]'
+export USERS_CONFIG='test|Queen Street, Auckland|test-topic'
 python -m src.main
 ```
 
@@ -40,7 +40,7 @@ Three-module pipeline orchestrated by GitHub Actions (`.github/workflows/notify.
 
 | Variable | Required | Description |
 |----------|----------|-------------|
-| `USERS_CONFIG` | Yes | JSON array of users (see README) |
+| `USERS_CONFIG` | Yes | Pipe-delimited users: `name\|street\|topic\|hour` (see README) |
 | `TEST_MODE` | No | Set "true" to bypass date check |
 
 ## External APIs
