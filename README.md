@@ -4,7 +4,7 @@ Automated push notifications for Auckland Council rubbish/recycling collection d
 
 ## How It Works
 
-1. GitHub Actions runs daily at your configured hour (default: 5pm NZT)
+1. GitHub Actions runs hourly (7am-10pm NZT window), notifies at your configured hour (default: 5pm)
 2. Scrapes Auckland Council website for your collection dates
 3. If tomorrow is a collection day, sends "Bin Day Tomorrow" notification via ntfy.sh
 
