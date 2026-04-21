@@ -143,28 +143,32 @@ class TestProcessUser:
         assert name == "test"
 
 class TestGetTomorrowsCollections:
-    """Tests for filtering collections to tomorrow."""
+    """Tests for filtering collections to tomorrow (NZT)."""
 
     def test_returns_events_for_tomorrow(self):
-        """Given events including tomorrow, returns only tomorrow's events."""
-        today = date.today()
-        tomorrow = today + timedelta(days=1)
+        """Given events including tomorrow (NZT), returns only tomorrow's events."""
+        fixed_nzt_today = date(2026, 4, 21)
+        fixed_nzt_tomorrow = date(2026, 4, 22)
         events = [
-            CollectionEvent(collection_type="rubbish", collection_date=today),
-            CollectionEvent(collection_type="recycle", collection_date=tomorrow),
+            CollectionEvent(collection_type="rubbish", collection_date=fixed_nzt_today),
+            CollectionEvent(collection_type="recycle", collection_date=fixed_nzt_tomorrow),
         ]
 
-        result = get_tomorrows_collections(events)
+        with patch("src.main.datetime") as mock_dt:
+            mock_dt.now.return_value.date.return_value = fixed_nzt_today
+            result = get_tomorrows_collections(events)
 
         assert len(result) == 1
         assert result[0].collection_type == "recycle"
-        assert result[0].collection_date == tomorrow
+        assert result[0].collection_date == fixed_nzt_tomorrow
 
     def test_returns_empty_when_no_tomorrow_events(self):
-        """Given no events tomorrow, returns empty list."""
-        today = date.today()
-        events = [CollectionEvent(collection_type="rubbish", collection_date=today)]
+        """Given no events tomorrow (NZT), returns empty list."""
+        fixed_nzt_today = date(2026, 4, 21)
+        events = [CollectionEvent(collection_type="rubbish", collection_date=fixed_nzt_today)]
 
-        result = get_tomorrows_collections(events)
+        with patch("src.main.datetime") as mock_dt:
+            mock_dt.now.return_value.date.return_value = fixed_nzt_today
+            result = get_tomorrows_collections(events)
 
         assert result == []

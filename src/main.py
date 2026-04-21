@@ -78,8 +78,10 @@ logger = logging.getLogger(__name__)
 
 
 def get_tomorrows_collections(events: list[CollectionEvent]) -> list[CollectionEvent]:
-    """Filter events to only those occurring tomorrow."""
-    tomorrow = date.today() + timedelta(days=1)
+    """Filter events to only those occurring tomorrow (NZT)."""
+    nzt = ZoneInfo("Pacific/Auckland")
+    today_nzt = datetime.now(nzt).date()
+    tomorrow = today_nzt + timedelta(days=1)
     return [e for e in events if e.collection_date == tomorrow]
 
 
@@ -134,10 +136,14 @@ def process_user(user: UserConfig, test_mode: bool) -> tuple[str, bool, str]:
         tomorrows_events = get_tomorrows_collections(events)
 
         # Find next bin day for logging
+        nzt = ZoneInfo("Pacific/Auckland")
+        today_nzt = datetime.now(nzt).date()
         next_bin = ""
         if events:
-            next_date = min(e.collection_date for e in events)
-            next_bin = f", next bin: {next_date.strftime('%a %d %b')}"
+            future_events = [e for e in events if e.collection_date >= today_nzt]
+            if future_events:
+                next_date = min(e.collection_date for e in future_events)
+                next_bin = f", next bin: {next_date.strftime('%a %d %b')}"
 
         # Check if it's the right hour
         is_right_hour, current_hour, configured_hour = is_user_notification_hour(user)
