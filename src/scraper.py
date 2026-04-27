@@ -15,7 +15,7 @@ class CollectionEvent:
 
 
 PROPERTY_API_URL = "https://experience.aucklandcouncil.govt.nz/nextapi/property"
-COLLECTION_PAGE_URL = "https://www.aucklandcouncil.govt.nz/en/rubbish-recycling/rubbish-recycling-collections/rubbish-recycling-collection-days/{area_id}.html"
+COLLECTION_PAGE_URL = "https://experience.aucklandcouncil.govt.nz/en/rubbish-recycling/rubbish-recycling-collections/rubbish-recycling-collection-days/{area_id}.html"
 
 API_HEADERS = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
