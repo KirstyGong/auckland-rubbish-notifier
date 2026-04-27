@@ -64,6 +64,10 @@ def fetch_collection_page(area_id: str) -> str:
     """
     url = COLLECTION_PAGE_URL.format(area_id=area_id)
     response = requests.get(url, headers=HEADERS, timeout=30)
+    if not response.ok:
+        print(f"HTTP {response.status_code} from collection page")
+        print(f"Response headers: {dict(response.headers)}")
+        print(f"Response body (first 500 chars): {response.text[:500]}")
     response.raise_for_status()
     return response.text
 
