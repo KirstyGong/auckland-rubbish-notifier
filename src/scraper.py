@@ -5,7 +5,6 @@ from datetime import date, datetime
 from typing import List
 
 import requests
-from bs4 import BeautifulSoup
 
 
 @dataclass
@@ -18,12 +17,24 @@ class CollectionEvent:
 PROPERTY_API_URL = "https://experience.aucklandcouncil.govt.nz/nextapi/property"
 COLLECTION_PAGE_URL = "https://www.aucklandcouncil.govt.nz/en/rubbish-recycling/rubbish-recycling-collections/rubbish-recycling-collection-days/{area_id}.html"
 
-HEADERS = {
+API_HEADERS = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept": "application/json, text/plain, */*",
     "Accept-Language": "en-NZ,en;q=0.9",
-    "Accept-Encoding": "gzip, deflate, br",
 }
+
+RSC_HEADERS = {
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    "Accept": "text/x-component",
+    "Accept-Language": "en-NZ,en;q=0.9",
+    "RSC": "1",
+    "Next-Router-State-Tree": "%5B%22%22%2C%7B%22children%22%3A%5B%22__PAGE__%22%2C%7B%7D%5D%7D%2Cnull%2Cnull%2Ctrue%5D",
+}
+
+_COLLECTION_TYPES = {"rubbish", "recycle", "food-waste"}
+_RSC_DATE_PATTERN = re.compile(
+    r'"icon":\{"icon":"(rubbish|recycle|food-waste)"\}[^}]*?"children":"([^"]+)"'
+)
 
 
 def lookup_address(street: str) -> str:
@@ -40,7 +51,7 @@ def lookup_address(street: str) -> str:
         ValueError: If no matching addresses found
     """
     url = f"{PROPERTY_API_URL}?query={street}&pageSize=10"
-    response = requests.get(url, headers=HEADERS, timeout=30)
+    response = requests.get(url, headers=API_HEADERS, timeout=30)
     response.raise_for_status()
 
     data = response.json()
@@ -54,16 +65,16 @@ def lookup_address(street: str) -> str:
 
 def fetch_collection_page(area_id: str) -> str:
     """
-    Fetch the collection page HTML for a given area_id.
+    Fetch the collection page RSC payload for a given area_id.
 
     Args:
         area_id: The property ID from lookup_address
 
     Returns:
-        Raw HTML string of the collection page
+        Raw RSC text payload of the collection page
     """
     url = COLLECTION_PAGE_URL.format(area_id=area_id)
-    response = requests.get(url, headers=HEADERS, timeout=30)
+    response = requests.get(url, headers=RSC_HEADERS, timeout=30)
     if not response.ok:
         print(f"HTTP {response.status_code} from collection page")
         print(f"Response headers: {dict(response.headers)}")
@@ -72,12 +83,12 @@ def fetch_collection_page(area_id: str) -> str:
     return response.text
 
 
-def parse_collection_dates(html: str, year: int = None) -> List[CollectionEvent]:
+def parse_collection_dates(rsc_text: str, year: int = None) -> List[CollectionEvent]:
     """
-    Parse collection dates from Auckland Council HTML.
+    Parse collection dates from Auckland Council RSC payload.
 
     Args:
-        html: Raw HTML from fetch_collection_page
+        rsc_text: RSC text/x-component payload from fetch_collection_page
         year: Year for date parsing (defaults to current year)
 
     Returns:
@@ -86,39 +97,21 @@ def parse_collection_dates(html: str, year: int = None) -> List[CollectionEvent]
     if year is None:
         year = datetime.now().year
 
-    soup = BeautifulSoup(html, "html.parser")
+    seen = set()
     events = []
 
-    # Find all collection entries
-    for p in soup.find_all("p", class_="mb-0 lead"):
-        # Find the icon element (i tag with acpl-icon class)
-        icon = p.find("i", class_="acpl-icon")
-        date_elem = p.find("b")
-
-        if not icon or not date_elem:
+    for collection_type, date_text in _RSC_DATE_PATTERN.findall(rsc_text):
+        key = (collection_type, date_text)
+        if key in seen:
             continue
+        seen.add(key)
 
-        # Extract collection type from class
-        classes = icon.get("class", [])
-        collection_type = None
-        for cls in classes:
-            if cls in ("rubbish", "recycle", "food-waste"):
-                collection_type = cls
-                break
-
-        if not collection_type:
-            continue
-
-        # Parse date from format "Monday, 14 April"
-        date_text = date_elem.get_text(strip=True)
         try:
-            # Remove day name, parse "14 April"
             date_part = date_text.split(", ", 1)[1] if ", " in date_text else date_text
             parsed_date = datetime.strptime(f"{date_part} {year}", "%d %B %Y").date()
-
             events.append(CollectionEvent(
                 collection_type=collection_type,
-                collection_date=parsed_date
+                collection_date=parsed_date,
             ))
         except (ValueError, IndexError):
             continue
@@ -137,5 +130,5 @@ def get_collections_for_street(street: str) -> List[CollectionEvent]:
         List of upcoming CollectionEvent objects
     """
     area_id = lookup_address(street)
-    html = fetch_collection_page(area_id)
-    return parse_collection_dates(html)
+    rsc_text = fetch_collection_page(area_id)
+    return parse_collection_dates(rsc_text)

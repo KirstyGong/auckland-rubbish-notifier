@@ -43,38 +43,18 @@ class TestLookupAddress:
 
 
 class TestParseCollectionDates:
-    """Tests for parsing collection dates from HTML."""
+    """Tests for parsing collection dates from RSC payload."""
 
-    SAMPLE_HTML = """
-    <html>
-    <body>
-        <div class="acpl-schedule-card">
-            <p class="mb-0 lead">
-                <span class="acpl-icon-with-attribute left">
-                    <i class="acpl-icon rubbish"></i>
-                    <span>Rubbish: <b>Monday, 14 April</b></span>
-                </span>
-            </p>
-            <p class="mb-0 lead">
-                <span class="acpl-icon-with-attribute left">
-                    <i class="acpl-icon recycle"></i>
-                    <span>Recycling: <b>Monday, 21 April</b></span>
-                </span>
-            </p>
-            <p class="mb-0 lead">
-                <span class="acpl-icon-with-attribute left">
-                    <i class="acpl-icon food-waste"></i>
-                    <span>Food scraps: <b>Monday, 14 April</b></span>
-                </span>
-            </p>
-        </div>
-    </body>
-    </html>
-    """
+    SAMPLE_RSC = (
+        '1e:[["$","$L2d",null,{"heading":"1 Queen Street"}],'
+        '["$","$L30",null,{"icon":{"icon":"rubbish"},"children":["Rubbish: ",["$","b",null,{"children":"Monday, 14 April"}]]}],'
+        '["$","$L30",null,{"icon":{"icon":"recycle"},"children":["Recycling: ",["$","b",null,{"children":"Monday, 21 April"}]]}],'
+        '["$","$L30",null,{"icon":{"icon":"food-waste"},"children":["Food scraps: ",["$","b",null,{"children":"Monday, 14 April"}]]}]]'
+    )
 
     def test_parses_rubbish_collection(self):
         """Extracts rubbish collection date."""
-        events = parse_collection_dates(self.SAMPLE_HTML, year=2026)
+        events = parse_collection_dates(self.SAMPLE_RSC, year=2026)
         rubbish_events = [e for e in events if e.collection_type == "rubbish"]
 
         assert len(rubbish_events) == 1
@@ -82,7 +62,7 @@ class TestParseCollectionDates:
 
     def test_parses_recycling_collection(self):
         """Extracts recycling collection date."""
-        events = parse_collection_dates(self.SAMPLE_HTML, year=2026)
+        events = parse_collection_dates(self.SAMPLE_RSC, year=2026)
         recycle_events = [e for e in events if e.collection_type == "recycle"]
 
         assert len(recycle_events) == 1
@@ -90,15 +70,15 @@ class TestParseCollectionDates:
 
     def test_parses_food_waste_collection(self):
         """Extracts food waste collection date."""
-        events = parse_collection_dates(self.SAMPLE_HTML, year=2026)
+        events = parse_collection_dates(self.SAMPLE_RSC, year=2026)
         food_events = [e for e in events if e.collection_type == "food-waste"]
 
         assert len(food_events) == 1
         assert food_events[0].collection_date == date(2026, 4, 14)
 
-    def test_returns_empty_list_for_empty_html(self):
+    def test_returns_empty_list_for_empty_payload(self):
         """Returns empty list when no collection info found."""
-        events = parse_collection_dates("<html></html>")
+        events = parse_collection_dates("")
         assert events == []
 
 
