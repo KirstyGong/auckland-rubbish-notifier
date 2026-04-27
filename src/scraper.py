@@ -19,8 +19,10 @@ PROPERTY_API_URL = "https://experience.aucklandcouncil.govt.nz/nextapi/property"
 COLLECTION_PAGE_URL = "https://www.aucklandcouncil.govt.nz/en/rubbish-recycling/rubbish-recycling-collections/rubbish-recycling-collection-days/{area_id}.html"
 
 HEADERS = {
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
-    "Accept": "application/json, text/html, */*",
+    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "en-NZ,en;q=0.9",
+    "Accept-Encoding": "gzip, deflate, br",
 }
 
 
