@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from src.scraper import get_collections_for_street, CollectionEvent
+from src.scraper import fetch_session_token, get_collections_for_street, CollectionEvent
 from src.notifier import send_notification
 
 
@@ -110,13 +110,14 @@ def is_user_notification_hour(user: UserConfig) -> tuple[bool, int, int]:
     return current_hour == user.notify_hour, current_hour, user.notify_hour
 
 
-def process_user(user: UserConfig, test_mode: bool) -> tuple[str, bool, str]:
+def process_user(user: UserConfig, test_mode: bool, token: str) -> tuple[str, bool, str]:
     """
     Process notifications for a single user.
 
     Args:
         user: User configuration
         test_mode: If True, send test notification regardless of date
+        token: Session JWT for API authentication
 
     Returns:
         Tuple of (user_name, success, message)
@@ -132,7 +133,7 @@ def process_user(user: UserConfig, test_mode: bool) -> tuple[str, bool, str]:
             return (user.name, True, "Test notification sent")
 
         # Fetch collections
-        events = get_collections_for_street(user.street)
+        events = get_collections_for_street(user.street, token)
         tomorrows_events = get_tomorrows_collections(events)
 
         # Find next bin day for logging
@@ -183,9 +184,15 @@ def main() -> int:
 
     logger.info(f"Processing {len(users)} user(s)")
 
+    try:
+        token = fetch_session_token()
+    except RuntimeError as e:
+        logger.error(f"Failed to get session token: {e}")
+        return 1
+
     results = []
     for user in users:
-        name, success, message = process_user(user, test_mode)
+        name, success, message = process_user(user, test_mode, token)
         results.append((name, success, message))
         logger.info(f"[{name}] {message}")
 

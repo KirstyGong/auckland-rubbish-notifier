@@ -91,7 +91,7 @@ class TestProcessUser:
         with patch("src.main.get_collections_for_street", return_value=events), \
              patch("src.main.send_notification") as mock_notify, \
              patch("src.main.is_user_notification_hour", return_value=(True, 17, 17)):
-            name, success, message = process_user(user, test_mode=False)
+            name, success, message = process_user(user, test_mode=False, token="fake-token")
 
         assert success is True
         assert "Rubbish" in message
@@ -101,8 +101,9 @@ class TestProcessUser:
         """Given wrong hour, skips and returns success."""
         user = UserConfig(name="test", street="Queen St", topic="test-topic", notify_hour=17)
 
-        with patch("src.main.is_user_notification_hour", return_value=(False, 10, 17)):
-            name, success, message = process_user(user, test_mode=False)
+        with patch("src.main.get_collections_for_street", return_value=[]), \
+             patch("src.main.is_user_notification_hour", return_value=(False, 10, 17)):
+            name, success, message = process_user(user, test_mode=False, token="fake-token")
 
         assert success is True
         assert "Skipped" in message
@@ -113,7 +114,7 @@ class TestProcessUser:
 
         with patch("src.main.get_collections_for_street", return_value=[]), \
              patch("src.main.is_user_notification_hour", return_value=(True, 17, 17)):
-            name, success, message = process_user(user, test_mode=False)
+            name, success, message = process_user(user, test_mode=False, token="fake-token")
 
         assert success is True
         assert "No collections tomorrow" in message
@@ -124,7 +125,7 @@ class TestProcessUser:
 
         with patch("src.main.get_collections_for_street", return_value=[]), \
              patch("src.main.send_notification") as mock_notify:
-            name, success, message = process_user(user, test_mode=True)
+            name, success, message = process_user(user, test_mode=True, token="fake-token")
 
         assert success is True
         assert "Test" in message
@@ -136,7 +137,7 @@ class TestProcessUser:
 
         with patch("src.main.get_collections_for_street", side_effect=Exception("API error")), \
              patch("src.main.is_user_notification_hour", return_value=(True, 17, 17)):
-            name, success, message = process_user(user, test_mode=False)
+            name, success, message = process_user(user, test_mode=False, token="fake-token")
 
         assert success is False
         assert "Error" in message

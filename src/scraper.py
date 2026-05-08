@@ -16,11 +16,13 @@ class CollectionEvent:
 
 PROPERTY_API_URL = "https://experience.aucklandcouncil.govt.nz/nextapi/property"
 COLLECTION_PAGE_URL = "https://experience.aucklandcouncil.govt.nz/en/rubbish-recycling/rubbish-recycling-collections/rubbish-recycling-collection-days/{area_id}.html"
+SESSION_TOKEN_URL = "https://experience.aucklandcouncil.govt.nz/en/rubbish-recycling/rubbish-recycling-collections/rubbish-recycling-collection-days.html"
+SESSION_TOKEN_ACTION_ID = "0085094deec5539b4c1957dddebcf440d92db43f11"
 
 API_HEADERS = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36",
-    "Accept": "application/json, text/plain, */*",
-    "Accept-Language": "en-NZ,en;q=0.9",
+    "Accept": "application/json",
+    "Content-Type": "application/json",
 }
 
 RSC_HEADERS = {
@@ -37,12 +39,37 @@ _RSC_DATE_PATTERN = re.compile(
 )
 
 
-def lookup_address(street: str) -> str:
+_JWT_PATTERN = re.compile(r'"(eyJhbG[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+)"')
+
+
+def fetch_session_token() -> str:
+    response = requests.post(
+        SESSION_TOKEN_URL,
+        headers={
+            "User-Agent": API_HEADERS["User-Agent"],
+            "Accept": "text/x-component",
+            "Content-Type": "text/plain;charset=UTF-8",
+            "Next-Action": SESSION_TOKEN_ACTION_ID,
+        },
+        data="[]",
+        timeout=30,
+    )
+    if not response.ok:
+        raise RuntimeError(f"Failed to fetch session token: HTTP {response.status_code}")
+
+    match = _JWT_PATTERN.search(response.text)
+    if not match:
+        raise RuntimeError("No token found in server action response")
+    return match.group(1)
+
+
+def lookup_address(street: str, token: str) -> str:
     """
     Look up area_id from street name using Auckland Council API.
 
     Args:
         street: Street name and suburb (e.g., "Queen Street, Auckland")
+        token: Session JWT for API authentication
 
     Returns:
         area_id: The property ID used for collection lookups
@@ -51,7 +78,8 @@ def lookup_address(street: str) -> str:
         ValueError: If no matching addresses found
     """
     url = f"{PROPERTY_API_URL}?query={street}&pageSize=10"
-    response = requests.get(url, headers=API_HEADERS, timeout=30)
+    headers = {**API_HEADERS, "Authorization": f"Bearer {token}"}
+    response = requests.get(url, headers=headers, timeout=30)
     response.raise_for_status()
 
     data = response.json()
@@ -119,16 +147,17 @@ def parse_collection_dates(rsc_text: str, year: int = None) -> List[CollectionEv
     return events
 
 
-def get_collections_for_street(street: str) -> List[CollectionEvent]:
+def get_collections_for_street(street: str, token: str) -> List[CollectionEvent]:
     """
     Convenience function: look up street and get collection dates.
 
     Args:
         street: Street name and suburb
+        token: Session JWT for API authentication
 
     Returns:
         List of upcoming CollectionEvent objects
     """
-    area_id = lookup_address(street)
+    area_id = lookup_address(street, token)
     rsc_text = fetch_collection_page(area_id)
     return parse_collection_dates(rsc_text)
